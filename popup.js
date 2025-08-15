@@ -44,6 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function handleFileSelect(e) {
     const files = e.target.files;
     handleFiles(files);
+    // Reset the input to allow selecting the same file again
+    e.target.value = '';
   }
 
   function handleFiles(files) {
@@ -69,14 +71,15 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="progress-bar">
           <div class="progress" style="width: 0%"></div>
         </div>
+        <div class="prediction-result"></div>
       </div>
       <button class="remove-btn" title="Remove">×</button>
     `;
 
     fileList.appendChild(fileItem);
 
-    // Simulate upload progress (in a real app, this would be an actual upload)
-    simulateUploadProgress(fileItem, file);
+    // Start the upload and prediction process
+    uploadAndPredict(fileItem, file);
 
     // Add remove button handler
     const removeBtn = fileItem.querySelector('.remove-btn');
@@ -86,18 +89,52 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function simulateUploadProgress(fileItem, file) {
+  async function uploadAndPredict(fileItem, file) {
     const progressBar = fileItem.querySelector('.progress');
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += Math.random() * 10;
-      if (progress >= 100) {
-        progress = 100;
-        clearInterval(interval);
-        fileItem.classList.add('upload-complete');
-      }
-      progressBar.style.width = `${progress}%`;
-    }, 200);
+    const resultElement = fileItem.querySelector('.prediction-result');
+    
+    try {
+      // Reset progress bar
+      progressBar.style.width = '0%';
+      progressBar.style.backgroundColor = '#4CAF50';
+      
+      // Show processing message
+      resultElement.innerHTML = '<div class="status">Uploading...</div>';
+      
+      // Call predictAudio with progress callback
+      const result = await predictAudio(file, (progress) => {
+        // Update progress bar in real-time
+        progressBar.style.width = `${progress}%`;
+        
+        // Show processing message when upload is complete but still waiting for response
+        if (progress === 100) {
+          resultElement.innerHTML = '<div class="status">Processing audio...</div>';
+        }
+      });
+      
+      // Update UI with prediction result
+      progressBar.style.width = '100%';
+      progressBar.style.backgroundColor = '#0d652d';
+      fileItem.classList.add('upload-complete');
+      
+      // Display the prediction result
+      resultElement.innerHTML = `
+        <div class="prediction">
+          <strong>Prediction:</strong> ${result.label} 
+          <span class="confidence">(${(result.confidence * 100).toFixed(1)}% confidence)</span>
+        </div>
+      `;
+      
+    } catch (error) {
+      console.error('Error processing file:', error);
+      progressBar.style.backgroundColor = '#d93025';
+      progressBar.style.width = '100%';
+      resultElement.innerHTML = `
+        <div class="error">
+          Error: ${error.message || 'Failed to process audio'}
+        </div>
+      `;
+    }
   }
 
   function formatFileSize(bytes) {
