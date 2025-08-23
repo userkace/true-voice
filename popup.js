@@ -1,3 +1,6 @@
+// Use browser API namespace that works in both Chrome and Firefox
+const browser = window.browser || window.chrome;
+
 document.addEventListener('DOMContentLoaded', () => {
   const fileInput = document.getElementById('audio-upload');
   const uploadContainer = document.querySelector('.upload-container');
@@ -54,10 +57,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function handleFiles(files) {
-    [...files].forEach(file => {
-      if (file.type.startsWith('audio/')) {
-        addFileToList(file);
-      }
+    // Convert FileList to array and filter audio files
+    const fileArray = Array.from(files).filter(file => {
+      // Some browsers might not have type set, so we'll accept those too
+      return !file.type || file.type.startsWith('audio/');
+    });
+    
+    if (fileArray.length === 0) {
+      // Show error if no audio files were found
+      alert('Please select audio files only.');
+      return;
+    }
+    
+    fileArray.forEach(file => {
+      addFileToList(file);
     });
   }
 

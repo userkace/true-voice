@@ -3,6 +3,12 @@
   "name": "TrueVoice",
   "version": "1.0",
   "description": "Upload and detect AI generated audio!",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "truevoice@kace.dev",
+      "strict_min_version": "109.0"
+    }
+  },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
