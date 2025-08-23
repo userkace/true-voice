@@ -6,6 +6,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Handle file selection
   fileInput.addEventListener('change', handleFileSelect);
 
+  // Handle click on upload container
+  uploadContainer.addEventListener('click', () => {
+    fileInput.click();
+  });
+
   // Drag and drop handlers
   ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
     uploadContainer.addEventListener(eventName, preventDefaults, false);
@@ -64,7 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileSize = formatFileSize(file.size);
 
     fileItem.innerHTML = `
-      <div class="file-icon">🎵</div>
       <div class="file-info">
         <div class="file-name" title="${file.name}">${file.name}</div>
         <div class="file-size">${fileSize}</div>
@@ -76,7 +80,12 @@ document.addEventListener('DOMContentLoaded', () => {
       <button class="remove-btn" title="Remove">×</button>
     `;
 
-    fileList.appendChild(fileItem);
+    // Insert new items at the top of the list
+    if (fileList.firstChild) {
+      fileList.insertBefore(fileItem, fileList.firstChild);
+    } else {
+      fileList.appendChild(fileItem);
+    }
 
     // Start the upload and prediction process
     uploadAndPredict(fileItem, file);
@@ -85,53 +94,140 @@ document.addEventListener('DOMContentLoaded', () => {
     const removeBtn = fileItem.querySelector('.remove-btn');
     removeBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      fileItem.remove();
+      // Add removing class to trigger the animation
+      fileItem.classList.add('removing');
+      // Remove the element after animation completes
+      setTimeout(() => {
+        fileItem.remove();
+      }, 300); // Match this with the CSS animation duration
     });
+  }
+
+  // Array of fun status messages for upload phase
+  const uploadMessages = [
+    'Sending audio to our AI detectives...',
+    'Beaming up your audio to the cloud...',
+    'Warming up the audio analysis engines...',
+    'Preparing to work our magic...',
+    'Getting the audio analysis party started...',
+    'Our AI is putting on its thinking cap...',
+    'Initializing sonic pattern detection...'
+  ];
+
+  // Array of fun status messages for processing phase
+  const processingMessages = [
+    'Our AI is listening carefully...',
+    'Analyzing audio fingerprints...',
+    'Decoding the sonic secrets...',
+    'Consulting the audio oracle...',
+    'Running complex audio algorithms...',
+    'The AI is deep in thought...',
+    'Almost there, just a few more calculations...'
+  ];
+
+  function getRandomMessage(messages) {
+    return messages[Math.floor(Math.random() * messages.length)];
   }
 
   async function uploadAndPredict(fileItem, file) {
     const progressBar = fileItem.querySelector('.progress');
     const resultElement = fileItem.querySelector('.prediction-result');
-    
+    let uploadInterval;
+    let hasPrediction = false; // Track if we've received a prediction
+
     try {
       // Reset progress bar
+      const progressBarContainer = fileItem.querySelector('.progress-bar');
+      if (progressBarContainer) {
+        progressBarContainer.style.display = 'block';
+      }
       progressBar.style.width = '0%';
       progressBar.style.backgroundColor = '#4CAF50';
-      
-      // Show processing message
-      resultElement.innerHTML = '<div class="status">Uploading...</div>';
-      
+
+      // Show initial upload message
+      const updateStatus = (message) => {
+        if (!hasPrediction && !resultElement.querySelector('.error')) {
+          clearInterval(uploadInterval);
+          resultElement.innerHTML = `<div class="status">${message}</div>`;
+        }
+      };
+
+      updateStatus(getRandomMessage(uploadMessages));
+
+      // Update message every 3 seconds during upload
+      uploadInterval = setInterval(() => {
+        if (progressBar.style.width !== '100%' && !resultElement.querySelector('.error')) {
+          updateStatus(getRandomMessage(uploadMessages));
+        } else {
+          clearInterval(uploadInterval);
+        }
+      }, 3000);
+
       // Call predictAudio with progress callback
       const result = await predictAudio(file, (progress) => {
         // Update progress bar in real-time
         progressBar.style.width = `${progress}%`;
-        
-        // Show processing message when upload is complete but still waiting for response
-        if (progress === 100) {
-          resultElement.innerHTML = '<div class="status">Processing audio...</div>';
+
+        // Switch to processing messages when upload is complete
+        if (progress === 100 && !hasPrediction) {
+          clearInterval(uploadInterval);
+          // Update processing message every 3 seconds
+          const processInterval = setInterval(() => {
+            if (!hasPrediction && !resultElement.querySelector('.error')) {
+              resultElement.innerHTML = `<div class="status">${getRandomMessage(processingMessages)}</div>`;
+            } else {
+              clearInterval(processInterval);
+            }
+          }, 3000);
+          // Store interval ID to clear it later
+          fileItem.processInterval = processInterval;
         }
       });
-      
-      // Update UI with prediction result
+
+      // Clear the interval when upload is complete
+      if (uploadInterval) clearInterval(uploadInterval);
+      if (fileItem.processInterval) {
+        clearInterval(fileItem.processInterval);
+      }
+
+      // Update UI with prediction result and hide progress bar
       progressBar.style.width = '100%';
       progressBar.style.backgroundColor = '#0d652d';
       fileItem.classList.add('upload-complete');
-      
-      // Display the prediction result
+
+      // Hide progress bar container after prediction
+      if (progressBar && progressBar.parentElement) {
+        progressBar.parentElement.style.display = 'none';
+      }
+
+      // Determine color based on prediction
+      const isReal = result.label.toLowerCase() === 'real';
+      const confidenceColor = isReal ? '#23d2fe' : '#ff6b6b'; // real : fake
+
+
+      // Display the prediction result with confidence pill
+      hasPrediction = true;
+      const confidencePercent = (result.confidence * 100).toFixed(1);
+      const displayLabel = result.label.charAt(0).toUpperCase() + result.label.slice(1).toLowerCase();
       resultElement.innerHTML = `
-        <div class="prediction">
-          <strong>Prediction:</strong> ${result.label} 
-          <span class="confidence">(${(result.confidence * 100).toFixed(1)}% confidence)</span>
-        </div>
+        <div class="prediction confidence-pill">${displayLabel}</div>
+        <div class="confidence-pill" style="color: ${confidenceColor};">${confidencePercent}%</div>
       `;
-      
+
     } catch (error) {
       console.error('Error processing file:', error);
-      progressBar.style.backgroundColor = '#d93025';
-      progressBar.style.width = '100%';
+      // Hide progress bar container and clear any intervals on error
+      const progressBarContainer = fileItem.querySelector('.progress-bar');
+      if (progressBarContainer) {
+        progressBarContainer.style.display = 'none';
+      }
+      if (fileItem.processInterval) {
+        clearInterval(fileItem.processInterval);
+      }
       resultElement.innerHTML = `
         <div class="error">
-          Error: ${error.message || 'Failed to process audio'}
+          Oops! Our AI got a bit confused.\n${['Try again?', 'Maybe another file?', 'Let\'s give it another shot!'][Math.floor(Math.random() * 3)]}
+          <div class="error-detail">${error.message || 'Failed to process audio'}</div>
         </div>
       `;
     }

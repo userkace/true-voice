@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:8000/predict'; // Replace once container is deployed
+const API_URL = 'https://truevoiceimg-935145982545.asia-southeast1.run.app/predict'; // Replace once container is deployed
+// const API_URL = 'http://localhost:8000/predict';
 
 /**
  * Sends an audio file to the prediction API with progress tracking
@@ -17,7 +18,7 @@ async function predictAudio(audioFile, onProgress) {
 
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        
+
         xhr.upload.onprogress = (event) => {
             if (event.lengthComputable) {
                 const percentComplete = Math.round((event.loaded / event.total) * 100);
