@@ -1,9 +1,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
+*{
+  animation: all 1s ease;
+}
+
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOutSlide {
+  to {
+    opacity: 0;
+    transform: translateX(-20px);
+    height: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border: none;
+  }
 }
 
 @keyframes fadeOut {
@@ -18,8 +34,13 @@
 }
 
 .file-item.removing {
-  animation: fadeOutSlide 0.3s ease-out forwards;
+  animation: fadeOutSlide 0.3s ease-out forwards !important;
   overflow: hidden;
+  pointer-events: none;
+  margin: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  border: none !important;
 }
 
 /* Header */
@@ -253,7 +274,7 @@ h1 {
 .file-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
 }
 
@@ -261,13 +282,15 @@ h1 {
   display: flex;
   align-items: center;
   padding: 12px 44px 12px 16px;
+  will-change: transform, opacity, height, margin, padding, border;
+  transform-origin: top center;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-radius: 12px;
   position: relative;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  margin-bottom: 8px;
+  /* margin-bottom: 10px; */
   animation: fadeIn 0.3s ease-out forwards;
   opacity: 0;
   transition: all 0.3s ease;

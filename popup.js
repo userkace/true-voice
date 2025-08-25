@@ -77,16 +77,51 @@ document.addEventListener('DOMContentLoaded', () => {
   uploadContainer.addEventListener('drop', handleDrop, false);
 
   function handleDrop(e) {
+    preventDefaults(e);
+    unhighlight();
     const dt = e.dataTransfer;
     const files = dt.files;
-    if (files.length > 0) {
-      handleFiles(files);
+
+    // Check if any files were dropped
+    if (!files || files.length === 0) {
+      return;
     }
+
+    // Filter audio files
+    const audioFiles = Array.from(files).filter(file =>
+      file.type && file.type.startsWith('audio/')
+    );
+
+    // Show error if no audio files found
+    if (audioFiles.length === 0) {
+      showError('This extension only accepts audio files.');
+      return;
+    }
+
+    handleFiles(files);
   }
 
   function handleFileSelect(e) {
     const files = e.target.files;
+
+    // Check if any files were selected
+    if (!files || files.length === 0) {
+      return;
+    }
+
+    // Filter audio files
+    const audioFiles = Array.from(files).filter(file =>
+      file.type && file.type.startsWith('audio/')
+    );
+
+    // Show error if no audio files found
+    if (audioFiles.length === 0) {
+      showError('This extension only accepts audio files.');
+      return;
+    }
+
     handleFiles(files);
+
     // Reset the input to allow selecting the same file again
     e.target.value = '';
   }
@@ -100,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (fileArray.length === 0) {
       // Show error if no audio files were found
-      showError('Please select audio files only.');
+      showError('This extension only accepts audio files.');
       return;
     }
 
