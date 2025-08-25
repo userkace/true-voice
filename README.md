@@ -38,6 +38,11 @@ A browser extension that helps detect AI-generated voice recordings with machine
 2. Drag and drop an audio file or click to browse
 3. View the prediction results (Real or AI-generated) with confidence percentage
 
+## Model Training
+
+The transformer model used in this extension was trained using the code available at:
+https://github.com/left-no-crumbz/thesis-testing
+
 ## Development
 
 ### Prerequisites
@@ -65,7 +70,10 @@ A browser extension that helps detect AI-generated voice recordings with machine
 
 ### File Structure
 
-- `popup/` - Main extension UI
-- `assets/` - Images and other static files
-- `styles/` - CSS styles
+- `assets/` - Demo and usage GIFs
+- `icons/` - Extension icons in different sizes
+- `popup.html` - Main extension popup UI
+- `popup.js` - Extension logic and API integration
+- `styles.css` - Styling for the extension
+- `hooks.js` - Browser extension hooks and utilities
 - `manifest.json` - Extension configuration
