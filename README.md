@@ -36,12 +36,11 @@ A browser extension that helps detect AI-generated voice recordings with machine
 
 1. Click the extension icon in your browser's toolbar
 2. Drag and drop an audio file or click to browse
-3. View the prediction results (Real or AI-generated) with confidence percentage
+3. View the prediction results (Real or Fake) with confidence percentage
 
 ## Model Training
 
-The transformer model used in this extension was trained using the code available at:
-https://github.com/left-no-crumbz/thesis-testing
+The transformer model used in this extension was trained using the code available [here](https://github.com/left-no-crumbz/thesis-testing).
 
 ## Development
 
