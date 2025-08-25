@@ -13,9 +13,12 @@ A browser extension that helps detect AI-generated voice recordings with machine
 
 ## Installation
 
-### From Chrome Web Store (Coming Soon)
+### From Chrome Web Store (Future Recommendation)
 
 ### Manual Installation
+
+> 📺 [Watch the installation tutorial on YouTube](https://www.youtube.com/watch?v=oswjtLwCUqg)
+
 
 1. Clone this repository:
    ```bash
