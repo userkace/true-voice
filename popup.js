@@ -1,6 +1,39 @@
 // Use browser API namespace that works in both Chrome and Firefox
 const browser = window.browser || window.chrome;
 
+// Function to show styled error messages
+function showError(message) {
+  const errorDiv = document.createElement('div');
+  errorDiv.className = 'error-message';
+  errorDiv.textContent = message;
+
+  // Style the error message
+  errorDiv.style.cssText = `
+    background: rgba(255, 107, 107, 0.15);
+    color: #ff6b6b;
+    font-weight: 500;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin: 10px 0;
+    border-left: 3px solid #ff6b6b;
+    animation: fadeIn 0.3s ease-in-out;
+  `;
+
+  // Add to the top of the container
+  const container = document.querySelector('.container');
+  if (container.firstChild) {
+    container.insertBefore(errorDiv, container.firstChild);
+  } else {
+    container.appendChild(errorDiv);
+  }
+
+  // Remove after 5 seconds with fade out animation
+  setTimeout(() => {
+    errorDiv.style.animation = 'fadeOut 0.3s ease-in-out forwards';
+    setTimeout(() => errorDiv.remove(), 300);
+  }, 5000);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const fileInput = document.getElementById('audio-upload');
   const uploadContainer = document.querySelector('.upload-container');
@@ -46,7 +79,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function handleDrop(e) {
     const dt = e.dataTransfer;
     const files = dt.files;
-    handleFiles(files);
+    if (files.length > 0) {
+      handleFiles(files);
+    }
   }
 
   function handleFileSelect(e) {
@@ -62,14 +97,19 @@ document.addEventListener('DOMContentLoaded', () => {
       // Some browsers might not have type set, so we'll accept those too
       return !file.type || file.type.startsWith('audio/');
     });
-    
+
     if (fileArray.length === 0) {
       // Show error if no audio files were found
-      alert('Please select audio files only.');
+      showError('Please select audio files only.');
       return;
     }
-    
+
+    const MAX_FILE_SIZE = 30 * 1024 * 1024; // 30MB in bytes
     fileArray.forEach(file => {
+      if (file.size > MAX_FILE_SIZE) {
+        showError(`File "${file.name}" exceeds the 30MB size limit and will not be uploaded.`);
+        return;
+      }
       addFileToList(file);
     });
   }
