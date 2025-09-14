@@ -479,6 +479,39 @@ h1 {
   padding-top: 8px;
 }
 
+/* Clear All Button */
+.clear-all-container {
+  margin: 4px 0 4px 0;
+  text-align: left;
+  animation: fadeIn 0.3s ease-out;
+  display: none; /* Hidden by default */
+  position: relative;
+  z-index: 1;
+}
+
+.clear-all-btn {
+  background: rgba(255, 59, 48, 0.1);
+  color: #FF3B30;
+  border: 1px solid rgba(255, 59, 48, 0.3);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  display: inline-block;
+}
+
+.clear-all-btn:hover {
+  background: rgba(255, 59, 48, 0.2);
+  transform: translateY(-1px);
+}
+
+.clear-all-btn:active {
+  transform: translateY(0);
+}
+
 /* Segments List */
 .segments-list {
   display: flex;

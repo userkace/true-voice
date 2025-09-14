@@ -34,6 +34,35 @@ function showError(message) {
   }, 5000);
 }
 
+// Function to update the clear all button visibility
+function updateClearAllButton() {
+  const fileList = document.getElementById('file-list');
+  const clearAllContainer = document.getElementById('clear-all-container');
+
+  if (fileList.children.length >= 3) {
+    clearAllContainer.style.display = 'block';
+  } else {
+    clearAllContainer.style.display = 'none';
+  }
+}
+
+// Function to clear all files
+function clearAllFiles() {
+  const fileList = document.getElementById('file-list');
+  const fileItems = fileList.querySelectorAll('.file-item');
+
+  // Add removing class to all file items
+  fileItems.forEach(item => {
+    item.classList.add('removing');
+  });
+
+  // Remove all file items after animation completes
+  setTimeout(() => {
+    fileList.innerHTML = '';
+    updateClearAllButton();
+  }, 300); // Match this with the CSS animation duration
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const fileInput = document.getElementById('audio-upload');
   const uploadContainer = document.querySelector('.upload-container');
@@ -75,6 +104,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Handle dropped files
   uploadContainer.addEventListener('drop', handleDrop, false);
+
+  // Add clear all button handler
+  const clearAllBtn = document.getElementById('clear-all-btn');
+  clearAllBtn.addEventListener('click', clearAllFiles);
 
   function handleDrop(e) {
     preventDefaults(e);
@@ -186,6 +219,9 @@ document.addEventListener('DOMContentLoaded', () => {
       fileList.appendChild(fileItem);
     }
 
+    // Update clear all button visibility
+    updateClearAllButton();
+
     // Start the upload and prediction process
     uploadAndPredict(fileItem, file);
 
@@ -198,6 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Remove the element after animation completes
       setTimeout(() => {
         fileItem.remove();
+        updateClearAllButton();
       }, 300); // Match this with the CSS animation duration
     });
   }
