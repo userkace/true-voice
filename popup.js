@@ -149,6 +149,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function formatDuration(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
   function addFileToList(file) {
     const fileItem = document.createElement('div');
     fileItem.className = 'file-item';
@@ -157,15 +163,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileSize = formatFileSize(file.size);
 
     fileItem.innerHTML = `
-      <div class="file-info">
-        <div class="file-name" title="${file.name}">${file.name}</div>
-        <div class="file-size">${fileSize}</div>
-        <div class="progress-bar">
-          <div class="progress" style="width: 0%"></div>
+      <div class="file-header">
+        <div class="file-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+          </svg>
         </div>
-        <div class="prediction-result"></div>
+        <div class="file-info">
+          <div class="file-name" title="${file.name}">${file.name}</div>
+          <div class="file-size">${fileSize}</div>
+          <div class="progress-bar">
+            <div class="progress" style="width: 0%"></div>
+          </div>
+          <div class="prediction-result"></div>
+        </div>
+        <button class="remove-btn" title="Remove">×</button>
       </div>
-      <button class="remove-btn" title="Remove">×</button>
+      <div class="accordion-content">
+        <div class="segments-list"></div>
+      </div>
     `;
 
     // Insert new items at the top of the list
@@ -215,6 +231,75 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getRandomMessage(messages) {
     return messages[Math.floor(Math.random() * messages.length)];
+  }
+
+  function createAccordionResult(fileItem, result) {
+    const fileHeader = fileItem.querySelector('.file-header');
+    const accordionContent = fileItem.querySelector('.accordion-content');
+    const segmentsList = fileItem.querySelector('.segments-list');
+    const resultElement = fileItem.querySelector('.prediction-result');
+    
+    // Determine color based on prediction
+    const isReal = result.label.toLowerCase() === 'real';
+    const confidenceColor = isReal ? '#23d2fe' : '#ff6b6b'; // real : fake
+    const confidencePercent = (result.confidence * 100).toFixed(1);
+    const displayLabel = result.label.charAt(0).toUpperCase() + result.label.slice(1).toLowerCase();
+
+    // Create the main result display
+    resultElement.innerHTML = `
+      <div class="accordion-header" data-expanded="false">
+        <div class="main-result">
+          <div class="prediction confidence-pill">${displayLabel}</div>
+          <div class="confidence-pill" style="color: ${confidenceColor};">${confidencePercent}%</div>
+        </div>
+        <div class="accordion-toggle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="chevron-icon">
+            <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+          </svg>
+        </div>
+      </div>
+    `;
+
+    // Create segments display
+    if (result.segments && result.segments.length > 0) {
+      result.segments.forEach((segment, index) => {
+        const segmentIsReal = segment.label.toLowerCase() === 'real';
+        const segmentConfidenceColor = segmentIsReal ? '#23d2fe' : '#ff6b6b';
+        const segmentConfidencePercent = (segment.probabilities[segment.label] * 100).toFixed(1);
+        const segmentDisplayLabel = segment.label.charAt(0).toUpperCase() + segment.label.slice(1).toLowerCase();
+        
+        const segmentItem = document.createElement('div');
+        segmentItem.className = 'segment-item';
+        segmentItem.innerHTML = `
+          <div class="segment-header">
+            <div class="segment-info">
+              <div class="segment-label">${segmentDisplayLabel}</div>
+            </div>
+            <div class="segment-confidence" style="color: ${segmentConfidenceColor};">
+              ${segmentConfidencePercent}%
+            </div>
+          </div>
+        `;
+        
+        segmentsList.appendChild(segmentItem);
+      });
+    }
+
+    // Add accordion toggle functionality
+    const accordionHeader = fileItem.querySelector('.accordion-header');
+    accordionHeader.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isExpanded = accordionHeader.dataset.expanded === 'true';
+      accordionHeader.dataset.expanded = !isExpanded;
+      
+      if (!isExpanded) {
+        accordionContent.style.maxHeight = accordionContent.scrollHeight + 'px';
+        fileItem.classList.add('expanded');
+      } else {
+        accordionContent.style.maxHeight = '0';
+        fileItem.classList.remove('expanded');
+      }
+    });
   }
 
   async function uploadAndPredict(fileItem, file) {
@@ -288,19 +373,9 @@ document.addEventListener('DOMContentLoaded', () => {
         progressBar.parentElement.style.display = 'none';
       }
 
-      // Determine color based on prediction
-      const isReal = result.label.toLowerCase() === 'real';
-      const confidenceColor = isReal ? '#23d2fe' : '#ff6b6b'; // real : fake
-
-
-      // Display the prediction result with confidence pill
+      // Create accordion result display
       hasPrediction = true;
-      const confidencePercent = (result.confidence * 100).toFixed(1);
-      const displayLabel = result.label.charAt(0).toUpperCase() + result.label.slice(1).toLowerCase();
-      resultElement.innerHTML = `
-        <div class="prediction confidence-pill">${displayLabel}</div>
-        <div class="confidence-pill" style="color: ${confidenceColor};">${confidencePercent}%</div>
-      `;
+      createAccordionResult(fileItem, result);
 
     } catch (error) {
       console.error('Error processing file:', error);
