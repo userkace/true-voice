@@ -426,6 +426,7 @@ h1 {
 
 /* Accordion Styles */
 .accordion-header {
+  width: max-content;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -437,8 +438,7 @@ h1 {
 .accordion-header:hover {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
-  margin: -4px;
-  padding: 4px;
+  transform: translateY(-2px);
 }
 
 .main-result {
@@ -454,6 +454,7 @@ h1 {
   justify-content: center;
   width: 20px;
   height: 20px;
+  margin-left: 8px;
   opacity: 0.7;
   transition: all 0.2s ease;
 }
@@ -484,14 +485,38 @@ h1 {
   flex-direction: column;
   gap: 6px;
   padding: 8px 0;
+  counter-reset: segment-counter;
 }
 
 .segment-item {
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 8px 12px 8px 32px;
   transition: all 0.2s ease;
+  margin: 0 0.5rem;
+  position: relative;
+  counter-increment: segment-counter;
+}
+
+.segment-item::before {
+  content: counter(segment-counter);
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1;
+  padding-top: 1px;
 }
 
 .segment-item:hover {

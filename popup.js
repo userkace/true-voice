@@ -164,11 +164,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     fileItem.innerHTML = `
       <div class="file-header">
-        <div class="file-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
-          </svg>
-        </div>
         <div class="file-info">
           <div class="file-name" title="${file.name}">${file.name}</div>
           <div class="file-size">${fileSize}</div>
@@ -238,11 +233,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const accordionContent = fileItem.querySelector('.accordion-content');
     const segmentsList = fileItem.querySelector('.segments-list');
     const resultElement = fileItem.querySelector('.prediction-result');
-    
-    // Determine color based on prediction
+
+    // Determine color based on prediction and confidence
     const isReal = result.label.toLowerCase() === 'real';
-    const confidenceColor = isReal ? '#23d2fe' : '#ff6b6b'; // real : fake
     const confidencePercent = (result.confidence * 100).toFixed(1);
+    let confidenceColor;
+    if (confidencePercent < 80) {
+      confidenceColor = '#FFD700'; // yellow for low confidence
+    } else {
+      confidenceColor = isReal ? '#23d2fe' : '#ff6b6b'; // real : fake
+    }
     const displayLabel = result.label.charAt(0).toUpperCase() + result.label.slice(1).toLowerCase();
 
     // Create the main result display
@@ -264,10 +264,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (result.segments && result.segments.length > 0) {
       result.segments.forEach((segment, index) => {
         const segmentIsReal = segment.label.toLowerCase() === 'real';
-        const segmentConfidenceColor = segmentIsReal ? '#23d2fe' : '#ff6b6b';
         const segmentConfidencePercent = (segment.probabilities[segment.label] * 100).toFixed(1);
+        let segmentConfidenceColor;
+        if (segmentConfidencePercent < 80) {
+          segmentConfidenceColor = '#FFD700'; // yellow for low confidence
+        } else {
+          segmentConfidenceColor = segmentIsReal ? '#23d2fe' : '#ff6b6b'; // real : fake
+        }
         const segmentDisplayLabel = segment.label.charAt(0).toUpperCase() + segment.label.slice(1).toLowerCase();
-        
+
         const segmentItem = document.createElement('div');
         segmentItem.className = 'segment-item';
         segmentItem.innerHTML = `
@@ -280,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </div>
         `;
-        
+
         segmentsList.appendChild(segmentItem);
       });
     }
@@ -291,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
       e.stopPropagation();
       const isExpanded = accordionHeader.dataset.expanded === 'true';
       accordionHeader.dataset.expanded = !isExpanded;
-      
+
       if (!isExpanded) {
         accordionContent.style.maxHeight = accordionContent.scrollHeight + 'px';
         fileItem.classList.add('expanded');

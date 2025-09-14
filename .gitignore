@@ -9,3 +9,5 @@ true-voice/manifest.json
 true-voice/popup.html
 true-voice/popup.js
 true-voice/styles.css
+/node_modules
+*.yaml
