@@ -279,21 +279,16 @@ h1 {
 }
 
 .file-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 44px 12px 16px;
-  will-change: transform, opacity, height, margin, padding, border;
-  transform-origin: top center;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-radius: 12px;
   position: relative;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  /* margin-bottom: 10px; */
   animation: fadeIn 0.3s ease-out forwards;
   opacity: 0;
   transition: all 0.3s ease;
+  overflow: hidden;
 }
 
 .file-item:hover {
@@ -302,9 +297,21 @@ h1 {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+.file-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 44px 12px 16px;
+  will-change: transform, opacity, height, margin, padding, border;
+  transform-origin: top center;
+  position: relative;
+}
+
 .file-icon {
   margin-right: 12px;
-  color: #1a73e8;
+  color: #4facfe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .file-info {
@@ -415,9 +422,153 @@ h1 {
 .prediction-result {
   margin-top: 8px;
   font-size: 13px;
+}
+
+/* Accordion Styles */
+.accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: all 0.2s ease;
+}
+
+.accordion-header:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  margin: -4px;
+  padding: 4px;
+}
+
+.main-result {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
+}
+
+.accordion-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.accordion-toggle .chevron-icon {
+  transition: transform 0.2s ease;
+}
+
+.accordion-header[data-expanded="true"] .chevron-icon {
+  transform: rotate(180deg);
+}
+
+.accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.file-item.expanded .accordion-content {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+/* Segments List */
+.segments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0;
+}
+
+.segment-item {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 8px 12px;
+  transition: all 0.2s ease;
+}
+
+.segment-item:hover {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.segment-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.play-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.8;
+}
+
+.play-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.play-btn svg {
+  margin-left: 1px; /* Slight offset to center the play icon */
+}
+
+.segment-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.segment-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #fff;
+}
+
+.segment-timing {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.segment-confidence {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  min-width: 40px;
+  text-align: center;
+}
+
+.segment-dropdown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  opacity: 0.5;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.segment-dropdown:hover {
+  opacity: 0.8;
 }
 
 .prediction {
