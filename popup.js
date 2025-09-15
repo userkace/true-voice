@@ -34,6 +34,202 @@ function showError(message) {
   }, 5000);
 }
 
+// Format file size to human readable format
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Function to save file list to storage
+async function saveFileList() {
+  try {
+    const fileList = document.getElementById('file-list');
+    if (!fileList) {
+      console.error('File list element not found');
+      return;
+    }
+
+    const files = [];
+
+    // Get all file items and their data
+    fileList.querySelectorAll('.file-item').forEach(item => {
+      const fileName = item.dataset.fileName;
+      const resultElement = item.querySelector('.prediction-result');
+      const resultHtml = resultElement ? resultElement.innerHTML : '';
+
+      // Get the file size from the UI if available
+      const sizeElement = item.querySelector('.file-size');
+      const fileSize = sizeElement ? sizeElement.textContent : '0 Bytes';
+      
+      // Get segments data if available
+      const segmentsList = item.querySelector('.segments-list');
+      const segments = [];
+      if (segmentsList) {
+        segmentsList.querySelectorAll('.segment-item').forEach(segmentItem => {
+          const labelEl = segmentItem.querySelector('.segment-label');
+          const confidenceEl = segmentItem.querySelector('.segment-confidence');
+          
+          if (labelEl && confidenceEl) {
+            segments.push({
+              label: labelEl.textContent,
+              confidence: confidenceEl.textContent.trim()
+            });
+          }
+        });
+      }
+      
+      // Save the file data
+      files.push({
+        fileName,
+        resultHtml: resultElement ? resultElement.innerHTML : '',
+        expanded: item.classList.contains('expanded'),
+        fileSize: fileSize,
+        segments: segments
+      });
+      
+      console.log('Saving file:', files[files.length - 1]);
+    });
+
+    console.log('Saving files to storage:', files);
+    await chrome.storage.local.set({ savedFiles: files });
+    console.log('Files saved successfully');
+
+    // Verify the save was successful
+    const verify = await chrome.storage.local.get('savedFiles');
+    console.log('Verify saved data:', verify);
+
+  } catch (error) {
+    console.error('Error saving file list:', error);
+    throw error; // Re-throw to handle in the calling function
+  }
+}
+
+// Function to load file list from storage
+async function loadFileList() {
+  try {
+    const fileList = document.getElementById('file-list');
+    if (!fileList) {
+      console.error('File list element not found');
+      return;
+    }
+
+    console.log('Loading files from storage...');
+    const result = await chrome.storage.local.get('savedFiles');
+    console.log('Loaded from storage:', result);
+
+    if (result.savedFiles && result.savedFiles.length > 0) {
+      // Clear existing items
+      fileList.innerHTML = '';
+
+      // Add each saved file
+      for (const file of result.savedFiles) {
+      const fileItem = document.createElement('div');
+      fileItem.className = 'file-item';
+      fileItem.dataset.fileName = file.fileName;
+
+      // Create the file item structure
+      // For loaded files, use the saved result HTML, file size, and segments
+      const fileSize = file.fileSize || '0 Bytes';
+      fileItem.innerHTML = `
+        <div class="file-header">
+          <div class="file-info">
+            <div class="file-name" title="${file.fileName}">${file.fileName}</div>
+            <div class="file-size">${fileSize}</div>
+            <div class="prediction-result">${file.resultHtml}</div>
+            <div class="progress-bar" style="display: none;">
+              <div class="progress" style="width: 100%"></div>
+            </div>
+          </div>
+          <button class="remove-btn" title="Remove">×</button>
+        </div>
+        <div class="accordion-content">
+          <div class="segments-list"></div>
+        </div>
+      `;
+
+      // Add to the list
+      fileList.appendChild(fileItem);
+      
+      // Restore segments if they exist
+      const segmentsList = fileItem.querySelector('.segments-list');
+      if (file.segments && file.segments.length > 0) {
+        file.segments.forEach(segment => {
+          const segmentItem = document.createElement('div');
+          segmentItem.className = 'segment-item';
+          segmentItem.innerHTML = `
+            <div class="segment-header">
+              <div class="segment-info">
+                <div class="segment-label">${segment.label}</div>
+              </div>
+              <div class="segment-confidence">${segment.confidence}</div>
+            </div>
+          `;
+          segmentsList.appendChild(segmentItem);
+        });
+      }
+      
+      // Restore expanded state if needed
+      if (file.expanded) {
+        fileItem.classList.add('expanded');
+        const accordionContent = fileItem.querySelector('.accordion-content');
+        if (accordionContent) {
+          accordionContent.style.maxHeight = accordionContent.scrollHeight + 'px';
+        }
+      }
+
+      // Add remove button handler
+      const removeBtn = fileItem.querySelector('.remove-btn');
+      if (removeBtn) {
+        removeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          fileItem.classList.add('removing');
+          setTimeout(() => {
+            fileItem.remove();
+            updateClearAllButton();
+            saveFileList(); // Save after removal
+          }, 300);
+        });
+      }
+
+      // Add accordion toggle
+      const accordionHeader = fileItem.querySelector('.accordion-header');
+      if (accordionHeader) {
+        accordionHeader.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isExpanded = accordionHeader.dataset.expanded === 'true';
+          accordionHeader.dataset.expanded = !isExpanded;
+
+          if (!isExpanded) {
+            const accordionContent = fileItem.querySelector('.accordion-content');
+            if (accordionContent) {
+              accordionContent.style.maxHeight = accordionContent.scrollHeight + 'px';
+            }
+            fileItem.classList.add('expanded');
+          } else {
+            const accordionContent = fileItem.querySelector('.accordion-content');
+            if (accordionContent) {
+              accordionContent.style.maxHeight = '0';
+            }
+            fileItem.classList.remove('expanded');
+          }
+
+          // Save the expanded state
+          saveFileList();
+        });
+      }
+    }
+
+      // Update clear all button
+      updateClearAllButton();
+    }
+  } catch (error) {
+    console.error('Error loading file list:', error);
+  }
+}
+
 // Function to update the clear all button visibility
 function updateClearAllButton() {
   const fileList = document.getElementById('file-list');
@@ -47,7 +243,7 @@ function updateClearAllButton() {
 }
 
 // Function to clear all files
-function clearAllFiles() {
+async function clearAllFiles() {
   const fileList = document.getElementById('file-list');
   const fileItems = fileList.querySelectorAll('.file-item');
 
@@ -57,13 +253,65 @@ function clearAllFiles() {
   });
 
   // Remove all file items after animation completes
-  setTimeout(() => {
-    fileList.innerHTML = '';
-    updateClearAllButton();
-  }, 300); // Match this with the CSS animation duration
+  return new Promise(resolve => {
+    setTimeout(() => {
+      fileList.innerHTML = '';
+      updateClearAllButton();
+      resolve();
+    }, 300); // Match this with the CSS animation duration
+  });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+// Test storage functionality
+async function testStorage() {
+  try {
+    // Test write
+    const testData = { test: 'test', timestamp: Date.now() };
+    await chrome.storage.local.set({ test: testData });
+
+    // Test read
+    const result = await chrome.storage.local.get('test');
+    console.log('Storage test - Read back:', result);
+
+    if (result.test && result.test.timestamp === testData.timestamp) {
+      console.log('Storage test passed!');
+      return true;
+    } else {
+      console.error('Storage test failed - data mismatch');
+      return false;
+    }
+  } catch (error) {
+    console.error('Storage test failed:', error);
+    return false;
+  }
+}
+
+// Save the file list when the popup is about to close
+window.addEventListener('beforeunload', async (event) => {
+  try {
+    console.log('Popup closing, saving file list...');
+    await saveFileList();
+  } catch (error) {
+    console.error('Error saving file list before unload:', error);
+  }
+  // Note: We don't prevent the unload event
+});
+
+document.addEventListener('DOMContentLoaded', async () => {
+  console.log('DOM loaded, testing storage...');
+  try {
+    const storageWorking = await testStorage();
+    if (!storageWorking) {
+      showError('Warning: Browser storage might not be working correctly');
+    }
+
+    console.log('Loading saved files...');
+    await loadFileList();
+    console.log('Initial file load complete');
+  } catch (error) {
+    console.error('Error loading saved files:', error);
+    showError('Error loading saved files: ' + error.message);
+  }
   const fileInput = document.getElementById('audio-upload');
   const uploadContainer = document.querySelector('.upload-container');
   const fileList = document.getElementById('file-list');
@@ -103,13 +351,25 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Handle dropped files
-  uploadContainer.addEventListener('drop', handleDrop, false);
+  uploadContainer.addEventListener('drop', async (e) => {
+    await handleDrop(e);
+  }, false);
 
   // Add clear all button handler
   const clearAllBtn = document.getElementById('clear-all-btn');
-  clearAllBtn.addEventListener('click', clearAllFiles);
+  clearAllBtn.addEventListener('click', async () => {
+    try {
+      await clearAllFiles();
+      await saveFileList();
+      // Clear storage completely
+      await chrome.storage.local.clear();
+      console.log('Storage cleared');
+    } catch (error) {
+      console.error('Error clearing files:', error);
+    }
+  });
 
-  function handleDrop(e) {
+  async function handleDrop(e) {
     preventDefaults(e);
     unhighlight();
     const dt = e.dataTransfer;
@@ -134,7 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
     handleFiles(files);
   }
 
-  function handleFileSelect(e) {
+  async function handleFileSelect(e) {
     const files = e.target.files;
 
     // Check if any files were selected
@@ -159,7 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
     e.target.value = '';
   }
 
-  function handleFiles(files) {
+  async function handleFiles(files) {
     // Convert FileList to array and filter audio files
     const fileArray = Array.from(files).filter(file => {
       // Some browsers might not have type set, so we'll accept those too
@@ -188,7 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 
-  function addFileToList(file) {
+  async function addFileToList(file) {
     const fileItem = document.createElement('div');
     fileItem.className = 'file-item';
     fileItem.dataset.fileName = file.name;
@@ -222,20 +482,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update clear all button visibility
     updateClearAllButton();
 
+    // Save the updated file list
+    await saveFileList();
+
     // Start the upload and prediction process
-    uploadAndPredict(fileItem, file);
+    await uploadAndPredict(fileItem, file);
 
     // Add remove button handler
     const removeBtn = fileItem.querySelector('.remove-btn');
-    removeBtn.addEventListener('click', (e) => {
+    removeBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
       // Add removing class to trigger the animation
       fileItem.classList.add('removing');
       // Remove the element after animation completes
-      setTimeout(() => {
-        fileItem.remove();
-        updateClearAllButton();
-      }, 300); // Match this with the CSS animation duration
+      await new Promise(resolve => setTimeout(resolve, 300));
+      fileItem.remove();
+      updateClearAllButton();
+      await saveFileList().catch(console.error);
     });
   }
 
@@ -265,7 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return messages[Math.floor(Math.random() * messages.length)];
   }
 
-  function createAccordionResult(fileItem, result) {
+  async function createAccordionResult(fileItem, result) {
     const fileHeader = fileItem.querySelector('.file-header');
     const accordionContent = fileItem.querySelector('.accordion-content');
     const segmentsList = fileItem.querySelector('.segments-list');
@@ -415,9 +678,10 @@ document.addEventListener('DOMContentLoaded', () => {
         progressBar.parentElement.style.display = 'none';
       }
 
-      // Create accordion result display
+      // Create accordion result display and save the file list when done
       hasPrediction = true;
-      createAccordionResult(fileItem, result);
+      await createAccordionResult(fileItem, result);
+      await saveFileList(); // Save after prediction is complete
 
     } catch (error) {
       console.error('Error processing file:', error);
