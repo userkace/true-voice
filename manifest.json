@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TrueVoice",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Upload and detect AI generated audio!",
   "browser_specific_settings": {
     "gecko": {
